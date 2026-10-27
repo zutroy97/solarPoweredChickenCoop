@@ -66,6 +66,21 @@ to Home Assistant via MQTT (Mosquitto on HA).
   coop text like "GWND: {...}".
 
 ## Plan / future pins (see build plan doc)
+Door names: door A = **Hen house**, door B = **Coop run**. Use these names (not A/B) on the control-box
+labels, the OLED and Home Assistant messages (e.g. "Coop run door opened locally").
+Planned control panel: 2 IP67 momentary door buttons on the outside under the OLED, 2 tare buttons
+inside the box. No screen/page button. Each button: one leg to an MCP23017 input, other leg to GND,
+internal pull-ups on (pressed = 0); avoid GPA7/GPB7 (output-only on newer datasheets).
+- GPA0 HEN HOUSE, GPA1 COOP RUN (outside): if the screen is dark, a press only wakes it; if lit, a
+  press opens/closes that door (ignored while moving). Panel text: "Press once to wake, again to move".
+- GPA2 TARE FEEDER, GPA3 TARE WATER (inside, PCB-mounted tactile switches on the carrier board,
+  silkscreen-labeled "hold 3 s"): hold 3 s; release early cancels.
+  The screen can't be seen from inside, so the result stays on the OLED for 60 s ("Feeder zeroed" /
+  "Tare failed") and the status LED (GP13) blinks: 3 short = OK, 1 long = failed.
+- All status must fit one OLED page (no paging).
+- Every local action is reported to HA. Must work with the gateway down. An HA tare button is an
+  optional extra only.
+MCP23017: VDD 3V3, VSS GND, A0-A2 GND (0x20), RESET to 3V3, INTA -> GP22, 100 nF at VDD.
 GP2/GP3 door A contacts, GP6/GP7 door B, GP4/GP5 I2C shared with the OLED (MCP23017 0x20,
 INA3221 0x40, SHT41 0x44), GP13 status LED, GP14/GP15 IR LEDs (doors A/B, commercial IR-remote doors),
 GP16 IR receiver, GP17 light PWM (inverted, via 2N3904 -> IRF520), GP18-21 HX711 feeder/waterer,
