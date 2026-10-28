@@ -69,22 +69,26 @@ to Home Assistant via MQTT (Mosquitto on HA).
 Door names: door A = **Hen house**, door B = **Coop run**. Use these names (not A/B) on the control-box
 labels, the OLED and Home Assistant messages (e.g. "Coop run door opened locally").
 Planned control panel: 2 IP67 momentary door buttons on the outside under the OLED, 2 tare buttons
-inside the box. No screen/page button. Each button: one leg to an MCP23017 input, other leg to GND,
-internal pull-ups on (pressed = 0); avoid GPA7/GPB7 (output-only on newer datasheets).
-- GPA0 HEN HOUSE, GPA1 COOP RUN (outside): if the screen is dark, a press only wakes it; if lit, a
-  press opens/closes that door (ignored while moving). Panel text: "Press once to wake, again to move".
-- GPA2 TARE FEEDER, GPA3 TARE WATER (inside, PCB-mounted tactile switches on the carrier board,
+inside the box. No screen/page button. Expander: **PCF8574** module (chosen 2026-10-27 over the
+MCP23017 in the build plan and a TCA9555 board kept spare). Each button: one leg to a PCF8574 pin, other
+leg to GND; pressed = 0 (write 1 to a pin to read it; weak built-in pull-up).
+- P0 HEN HOUSE, P1 COOP RUN (outside): add a 10k pull-up to 3V3 on each (long wires, noise).
+  If the screen is dark, a press only wakes it; if lit, a press opens/closes that door (ignored while
+  moving). Panel text: "Press once to wake, again to move".
+- P2 TARE FEEDER, P3 TARE WATER (inside, PCB-mounted tactile switches on the carrier board,
   silkscreen-labeled "hold 3 s"): hold 3 s; release early cancels.
   The screen can't be seen from inside, so the result stays on the OLED for 60 s ("Feeder zeroed" /
   "Tare failed") and the status LED (GP13) blinks: 3 short = OK, 1 long = failed.
+- P4-P7 spare.
 - All status must fit one OLED page (no paging).
 - Every local action is reported to HA. Must work with the gateway down. An HA tare button is an
   optional extra only.
-MCP23017: VDD 3V3, VSS GND, A0-A2 GND (0x20), RESET to 3V3, INTA -> GP22, 100 nF at VDD.
-GP2/GP3 door A contacts, GP6/GP7 door B, GP4/GP5 I2C shared with the OLED (MCP23017 0x20,
+PCF8574: VCC 3V3, GND, SDA GP4, SCL GP5; address jumpers all low = 0x20 (0x38 if the chip is a
+PCF8574A). INT -> GP22 if the board brings it out; otherwise poll every ~20 ms.
+GP2/GP3 door A contacts, GP6/GP7 door B, GP4/GP5 I2C shared with the OLED (PCF8574 0x20,
 INA3221 0x40, SHT41 0x44), GP13 status LED, GP14/GP15 IR LEDs (doors A/B, commercial IR-remote doors),
 GP16 IR receiver, GP17 light PWM (inverted, via 2N3904 -> IRF520), GP18-21 HX711 feeder/waterer,
-GP22 MCP23017 INTA, GP26 heater clamp, GP27 12V battery divider (100k/22k).
+GP22 PCF8574 INT (optional), GP26 heater clamp, GP27 12V battery divider (100k/22k).
 KiCad carrier board (`coop_node`, socketed Pico): NOT started yet (no files exist as of 2026-10-18).
 Per the build plan it is Phase 3 (weeks 9–12), drawn only from circuits proven on the breadboard.
 Build plan doc: https://claude.ai/code/artifact/8fcd9386-4051-48c5-9cdd-96f92910ac93
